@@ -1,6 +1,0 @@
-kagglehub
-scikit-learn
-pandas
-matplotlib
-seaborn
-optuna

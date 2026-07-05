@@ -1,0 +1,11 @@
+kagglehub
+scikit-learn
+pandas
+matplotlib
+seaborn
+optuna
+joblib
+fastapi
+pydantic
+uvicorn
+pandantic
