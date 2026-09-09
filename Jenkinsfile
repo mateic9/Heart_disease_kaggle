@@ -3,7 +3,10 @@ pipeline {
   stages {
     stage('hello') {
       steps {
-        sh 'echo "Hello World"'
+       sh '''#!/bin/bash
+            echo $(uname -a)
+         '''
+        
       }
     }
   }
