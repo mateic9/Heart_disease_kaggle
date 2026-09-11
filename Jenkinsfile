@@ -4,6 +4,7 @@ pipeline {
     stage('hello') {
       steps {
        sh '''#!/bin/bash
+            whoami
             docker images
          '''
         
