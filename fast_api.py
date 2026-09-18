@@ -1,14 +1,22 @@
 from pathlib import Path
 from typing import Literal
-
+import os
 import joblib
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
 
 app = FastAPI()
-
-MODEL_PATH = Path("models/heart_pipeline.joblib")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # or specific origins like ["http://localhost:3000"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+MODEL_PATH = os.getenv("MODEL_PATH")
 model = joblib.load(MODEL_PATH)
 
 
@@ -63,3 +71,15 @@ def predict(body: PredictBody):
             status_code=400,
             detail=f"Prediction failed: {str(e)}"
         )
+@app.get("/last_update_date")   
+def last_update_date():
+    try:
+        last_update = MODEL_PATH.stat().st_mtime
+        date = datetime.fromtimestamp(last_update).strftime("%d-%m-%Y")
+        print(date)
+        return {"last_update_date": date}
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve last update date: {str(e)}"
+        )    
