@@ -57,7 +57,7 @@ pipeline {
                  sh '''
                     # Stop/remove temporary test container
                     docker rm -f heart-server || true
-                    echo ("Running as user: $(whoami)")
+                    echo "Running as user: $(whoami)"
                     minikube start
                     # Create/update Kubernetes resources
                     kubectl apply -f deployment.yaml
