@@ -75,7 +75,7 @@ def predict(body: PredictBody):
 def last_update_date():
     try:
         last_update = MODEL_PATH.stat().st_mtime
-        date = datetime.fromtimestamp(last_update).strftime("%d-%m-%Y")
+        date = datetime.fromtimestamp(last_update).strftime("%d-%m-%Y-%H:%M:%S")
         print(date)
         return {"last_update_date": date}
     except Exception as e:
