@@ -44,7 +44,7 @@ pipeline {
                     docker run -d \
                         --name heart-server \
                         --env-file .env \
-                        -e MODEL_PATH= models/model_fold_1.joblib \
+                        -e MODEL_PATH=models/model_fold_1.joblib \
                         -p 5999:5999 \
                         heart_dis_server:latest
                 '''
@@ -53,4 +53,5 @@ pipeline {
     }
 
   }
+}
 }
