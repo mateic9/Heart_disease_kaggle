@@ -16,7 +16,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-MODEL_PATH = os.getenv("MODEL_PATH")
+MODEL_PATH = Path(os.getenv("MODEL_PATH"))
 model = joblib.load(MODEL_PATH)
 
 
