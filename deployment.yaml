@@ -18,6 +18,9 @@ spec:
       - name: heart-server
         image: heart_dis_server:latest
         imagePullPolicy: Never
+        env: 
+        - name: MODEL_PATH
+          value: models/heart_pipeline.joblib
         ports:
         - containerPort: 5999
         

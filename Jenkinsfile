@@ -1,57 +1,75 @@
 pipeline {
-  agent any
-  stages {
-    stage('Buid') {
-      steps {
-       sh '''
-           docker build -t heart_dis_server:latest .
-           docker image inspect heart_dis_server:latest
-         '''
-        
-      }
+    agent any
+
+    environment {
+        MODEL_PATH = 'models/model_fold_0.joblib'
     }
 
-   stage('Start Container') {
+    stages {
+
+        stage('Build') {
+            steps {
+                sh '''
+                    docker build -t heart_dis_server:latest .
+                    docker image inspect heart_dis_server:latest
+                '''
+            }
+        }
+
+        stage('Start Container') {
             steps {
                 sh '''
                     docker rm -f heart-server 2>/dev/null || true
 
                     docker run -d \
                         --name heart-server \
-                        --env-file .env \
+                        -e MODEL_PATH=${MODEL_PATH} \
                         -p 5999:5999 \
                         heart_dis_server:latest
                 '''
             }
         }
-     stage('Run Tests') {
-    steps {
-        script {
-            def status = sh(
-                script: '''
-                    docker exec heart-server \
-                        pytest tests/test_model.py
-                ''',
-                returnStatus: true
-            )
 
-            if (status != 0) {
-                echo "Model tests failed. Switching MODEL_PATH..."
+        stage('Run Tests') {
+            steps {
+                script {
+                    def status = sh(
+                        script: '''
+                            docker exec heart-server \
+                                pytest tests/test_model.py
+                        ''',
+                        returnStatus: true
+                    )
 
-                sh '''
-                    docker rm -f heart-server
+                    if (status != 0) {
+                        echo "Model tests failed. Switching MODEL_PATH..."
 
-                    docker run -d \
-                        --name heart-server \
-                        --env-file .env \
-                        -e MODEL_PATH=models/model_fold_1.joblib \
-                        -p 5999:5999 \
-                        heart_dis_server:latest
+                        env.MODEL_PATH = 'models/model_fold_1.joblib'
+                    } else {
+                        echo "Model tests passed."
+                    }
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                 sh '''
+                    # Stop/remove temporary test container
+                    docker rm -f heart-server || true
+
+                    # Create/update Kubernetes resources
+                    kubectl apply -f deployment.yaml
+
+                    # Override MODEL_PATH with the model selected by Jenkins
+                    kubectl set env \
+                        deployment/heart-server \
+                        MODEL_PATH=${MODEL_PATH}
+
+                    # Wait for deployment
+                    kubectl rollout status deployment/heart-server
                 '''
-          }
+            }
         }
     }
-
-  }
-}
 }
