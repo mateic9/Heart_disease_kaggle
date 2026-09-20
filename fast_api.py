@@ -7,6 +7,9 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv(".env")
 
 app = FastAPI()
 app.add_middleware(
@@ -16,7 +19,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-MODEL_PATH = Path(os.getenv("MODEL_PATH"))
+MODEL_PATH = Path(os.getenv("MODEL_PATH", "models/heart_pipeline.joblib"))
+if not MODEL_PATH.is_absolute():
+    MODEL_PATH = (Path(__file__).parent / MODEL_PATH).resolve()
 model = joblib.load(MODEL_PATH)
 
 
@@ -74,10 +79,10 @@ def predict(body: PredictBody):
 @app.get("/last_update_date")   
 def last_update_date():
     try:
-        last_update = MODEL_PATH.stat().st_mtime
-        date = datetime.fromtimestamp(last_update).strftime("%d-%m-%Y-%H:%M:%S")
-        print(date)
-        return {"last_update_date": date}
+       
+        return {
+            "model_path": str(MODEL_PATH)
+        }
     except Exception as e:
         raise HTTPException(
             status_code=500,
