@@ -1,4 +1,5 @@
 
+
 name: Model CI
 
 on:
@@ -6,7 +7,8 @@ on:
     branches: ["main"]
   workflow_dispatch: 
   schedule:
-    - cron: "46/6 14 * * *"
+    - cron: "0/7 17 * * *"
+      timezone: "Europe/Bucharest"
 jobs:
   build:
     runs-on: ubuntu-latest
