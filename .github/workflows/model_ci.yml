@@ -1,0 +1,74 @@
+name: Model CI
+
+on:
+  push:
+    branches: ["main"]
+
+jobs:  
+  build: 
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up the environment
+        run: |
+            docker build -t heart_dis_server:latest .
+            docker image inspect heart_dis_server:latest
+     
+      - name: Start container and test models
+        shell: bash
+        run: |
+          set -e
+
+          # Remove any existing container
+          docker rm -f heart-server 2>/dev/null || true
+
+          # Start container with primary model
+          docker run -d \
+            --name heart-server \
+            -e MODEL_PATH="$MODEL_PATH" \
+            -p 5999:5999 \
+            heart_dis_server:latest
+
+          echo "MODEL_PATH=$MODEL_PATH"
+          echo "DEFAULT_MODEL_PATH=$DEFAULT_MODEL_PATH"
+          echo "TEST_CSV_EXPECTED_RESPONSES=$TEST_CSV_EXPECTED_RESPONSES"
+          # Test primary model
+          if docker exec heart-server \
+              python -m pytest tests/test_model.py; then
+
+            echo "Primary model tests passed."
+
+          else
+            echo "Primary model tests failed."
+            echo "Switching to default model..."
+
+            # Remove container using primary model
+            docker rm -f heart-server
+           
+            # Start container using default model
+            docker run -d \
+              --name heart-server \
+              -e MODEL_PATH="$DEFAULT_MODEL_PATH" \
+              -p 5999:5999 \
+              heart_dis_server:latest
+            
+            # Test default model
+            if docker exec heart-server \
+                python -m pytest tests/test_model.py; then
+
+              echo "Default model tests passed."
+              echo "MODEL_PATH=$DEFAULT_MODEL_PATH" >> "$GITHUB_ENV"
+
+            else
+              echo "Default model tests failed."
+              exit 1
+            fi
+          fi
+
+      - name: Show selected model
+        run: |
+          echo "Selected model: $MODEL_PATH"
+
+          
+              
+    
