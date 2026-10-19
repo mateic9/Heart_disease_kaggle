@@ -8,6 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: model_ci
 
     env:
       MODEL_PATH: ${{ vars.MODEL_PATH }}
