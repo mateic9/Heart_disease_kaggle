@@ -1,19 +1,40 @@
+
 name: Model CI
 
 on:
   push:
     branches: ["main"]
 
-jobs:  
-  build: 
+jobs:
+  build:
     runs-on: ubuntu-latest
+
+    env:
+      MODEL_PATH: ${{ vars.MODEL_PATH }}
+      DEFAULT_MODEL_PATH: ${{ vars.DEFAULT_MODEL_PATH }}
+      TEST_CSV_EXPECTED_RESPONSES: ${{ vars.TEST_CSV_EXPECTED_RESPONSES }}
+
     steps:
-      - uses: actions/checkout@v6
-      - name: Set up the environment
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Verify environment variables
+        shell: bash
         run: |
-            docker build -t heart_dis_server:latest .
-            docker image inspect heart_dis_server:latest
-     
+          for var in MODEL_PATH DEFAULT_MODEL_PATH TEST_CSV_EXPECTED_RESPONSES; do
+            if [[ -n "${!var}" ]]; then
+              echo "$var=${!var}"
+            else
+              echo "::error::$var is missing or empty"
+              exit 1
+            fi
+          done
+
+      - name: Build Docker image
+        run: |
+          docker build -t heart_dis_server:latest .
+          docker image inspect heart_dis_server:latest
+
       - name: Start container and test models
         shell: bash
         run: |
@@ -22,17 +43,16 @@ jobs:
           # Remove any existing container
           docker rm -f heart-server 2>/dev/null || true
 
-          # Start container with primary model
+          echo "Starting container with primary model: $MODEL_PATH"
+
           docker run -d \
             --name heart-server \
             -e MODEL_PATH="$MODEL_PATH" \
+            -e TEST_CSV_EXPECTED_RESPONSES="$TEST_CSV_EXPECTED_RESPONSES" \
             -p 5999:5999 \
             heart_dis_server:latest
 
-          echo "MODEL_PATH=$MODEL_PATH"
-          echo "DEFAULT_MODEL_PATH=$DEFAULT_MODEL_PATH"
-          echo "TEST_CSV_EXPECTED_RESPONSES=$TEST_CSV_EXPECTED_RESPONSES"
-          # Test primary model
+          # Run tests using primary model
           if docker exec heart-server \
               python -m pytest tests/test_model.py; then
 
@@ -40,27 +60,30 @@ jobs:
 
           else
             echo "Primary model tests failed."
-            echo "Switching to default model..."
+            echo "Switching to default model: $DEFAULT_MODEL_PATH"
 
-            # Remove container using primary model
+            # Stop and remove primary container
             docker rm -f heart-server
-           
-            # Start container using default model
+
+            # Start container with default model
             docker run -d \
               --name heart-server \
               -e MODEL_PATH="$DEFAULT_MODEL_PATH" \
+              -e TEST_CSV_EXPECTED_RESPONSES="$TEST_CSV_EXPECTED_RESPONSES" \
               -p 5999:5999 \
               heart_dis_server:latest
-            
-            # Test default model
+
+            # Run tests using default model
             if docker exec heart-server \
                 python -m pytest tests/test_model.py; then
 
               echo "Default model tests passed."
+
+              # Update MODEL_PATH for subsequent steps
               echo "MODEL_PATH=$DEFAULT_MODEL_PATH" >> "$GITHUB_ENV"
 
             else
-              echo "Default model tests failed."
+              echo "::error::Default model tests failed."
               exit 1
             fi
           fi
@@ -68,7 +91,4 @@ jobs:
       - name: Show selected model
         run: |
           echo "Selected model: $MODEL_PATH"
-
-          
-              
-    
+          docker exec heart-server printenv MODEL_PATH
