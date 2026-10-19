@@ -29,6 +29,9 @@ jobs:
             -p 5999:5999 \
             heart_dis_server:latest
 
+          echo "MODEL_PATH=$MODEL_PATH"
+          echo "DEFAULT_MODEL_PATH=$DEFAULT_MODEL_PATH"
+          echo "TEST_CSV_EXPECTED_RESPONSES=$TEST_CSV_EXPECTED_RESPONSES"
           # Test primary model
           if docker exec heart-server \
               python -m pytest tests/test_model.py; then
@@ -41,14 +44,14 @@ jobs:
 
             # Remove container using primary model
             docker rm -f heart-server
-
+           
             # Start container using default model
             docker run -d \
               --name heart-server \
               -e MODEL_PATH="$DEFAULT_MODEL_PATH" \
               -p 5999:5999 \
               heart_dis_server:latest
-
+            
             # Test default model
             if docker exec heart-server \
                 python -m pytest tests/test_model.py; then
