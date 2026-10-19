@@ -4,7 +4,7 @@ from pathlib import Path
 import joblib
 import pandas as pd
 test_csv_expected_responses = os.environ.get("TEST_CSV_EXPECTED_RESPONSES", "tests/unmodified_data.csv")
-model_weights_path =  os.environ.get("MODEL_WEIGHTS_PATH", "models/heart_pipeline.joblib")
+model_weights_path =  os.environ.get("MODEL_PATH", "models/heart_pipeline.joblib")
 model = joblib.load(model_weights_path)
 minim_threshold = 0.9 #Define the minimum threshold for classification
 def test_model_prediction():
