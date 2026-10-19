@@ -8,7 +8,7 @@ jobs:
   build: 
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - name: Set up the environment
         run: |
             docker build -t heart_dis_server:latest .
