@@ -21,7 +21,7 @@ jobs:
           count=$(gh api \
             "repos/${{ github.repository }}/issues?state=open&per_page=100" \
             --jq '[.[] | select(.pull_request == null)] | length')
-
+          echo "Count issues:", $count
           if [ "$count" -gt 0 ]; then
             echo "Blocked: $count open issues exist."
             exit 1
