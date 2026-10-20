@@ -4,6 +4,7 @@ name: Check Open Issues
 on:
   pull_request:
     branches: [main]
+  workflow_dispatch:   
 
 permissions:
   issues: read
