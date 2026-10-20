@@ -7,7 +7,7 @@ on:
     branches: ["main"]
   workflow_dispatch: 
   schedule:
-    - cron: "0/7 17 * * *"
+    - cron: 20/10 9 * * *
       timezone: "Europe/Bucharest"
 jobs:
   build:
