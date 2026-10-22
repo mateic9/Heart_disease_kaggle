@@ -1,5 +1,4 @@
 
-name: Check Open Issues
 
 on:
   pull_request:
